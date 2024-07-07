@@ -1,10 +1,13 @@
 package comic
 
 import (
+	"github.com/PuerkitoBio/goquery"
 	"github.com/Strayneko/KomikcastAPI/services/comic"
+	"github.com/Strayneko/KomikcastAPI/services/scraper"
 	"github.com/Strayneko/KomikcastAPI/types"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
+	"strconv"
 )
 
 type Controller interface {
@@ -12,20 +15,56 @@ type Controller interface {
 }
 
 func GetComicList(ctx *fiber.Ctx) error {
-	var message string
+	path := "daftar-komik/"
+	page := ctx.Query("page", "1")
+	currentPage, err := strconv.ParseInt(page, 10, 16)
 
-	comicService := comic.New()
-	comicList := comicService.GetComicList(ctx)
-	if comicList == nil || len(comicList) == 0 {
-		message = "Cannot fetch comic list."
-	} else {
-		message = "List of comics successfully fetched."
+	if err != nil || currentPage <= 0 {
+		return responseError(ctx, fiber.NewError(http.StatusBadRequest, "Bad Request: Invalid page"))
 	}
 
-	return ctx.JSON(types.ResponseType{
-		Status:  true,
-		Code:    http.StatusOK,
-		Message: message,
-		Data:    &comicList,
+	if len(page) > 0 {
+		path += "page/" + page
+	}
+
+	return baseGetComicList(ctx, path, int16(currentPage))
+}
+
+func baseGetComicList(ctx *fiber.Ctx, path string, page int16) error {
+	var doc *goquery.Document
+	var comicList []types.ComicType
+	var err *fiber.Error
+
+	scraperService := scraper.New()
+
+	doc, err = scraperService.Scrape(path)
+	if err != nil {
+		return responseError(ctx, err)
+	}
+
+	comicService := comic.New(doc)
+	comicList, err = comicService.GetComicList(ctx)
+	lastPage := comicService.GetLastPageNumber()
+
+	if err != nil {
+		return responseError(ctx, err)
+	}
+
+	return ctx.Status(http.StatusOK).JSON(types.ResponseType{
+		Status:      true,
+		Code:        http.StatusOK,
+		LastPage:    lastPage,
+		CurrentPage: page,
+		Total:       int16(len(comicList)),
+		Message:     "List of comics successfully fetched.",
+		Data:        &comicList,
+	})
+}
+
+func responseError(ctx *fiber.Ctx, err *fiber.Error) error {
+	return ctx.Status(err.Code).JSON(types.ResponseType{
+		Status:  false,
+		Code:    int16(err.Code),
+		Message: err.Message,
 	})
 }
