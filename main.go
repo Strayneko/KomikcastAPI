@@ -8,6 +8,7 @@ import (
 
 func main() {
 	configs.InitViperEnvConfig()
+	configs.InitLogger()
 	configs.InitCache()
 	initFiberApp()
 }
