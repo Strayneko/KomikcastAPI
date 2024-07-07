@@ -5,11 +5,16 @@ type ComicType struct {
 	ComicType   string           `json:"comic_type"`
 	Title       string           `json:"title"`
 	Url         string           `json:"url"`
-	LastChapter string           `json:"last_chapter"`
-	ComicRating ComicRatingTypes `json:"comic_rating"`
+	LastChapter ComicChapterType `json:"last_chapter"`
+	ComicRating ComicRatingType  `json:"comic_rating"`
 }
 
-type ComicRatingTypes struct {
-	StarRating int     `json:"star_rating"`
-	Rating     float32 `json:"rating"`
+type ComicRatingType struct {
+	StarRating int8   `json:"star_rating"`
+	Rating     string `json:"rating"`
+}
+
+type ComicChapterType struct {
+	LastChapter    string `json:"last_chapter"`
+	LastChapterUrl string `json:"last_chapter_url"`
 }
