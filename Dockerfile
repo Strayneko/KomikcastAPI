@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 COPY go.mod go.sum ./
 
 # install dependencies
-RUN go mod download
+RUN go mod tidy
 
 # copy app source code
 COPY . .
