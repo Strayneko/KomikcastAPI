@@ -2,57 +2,120 @@ package comic
 
 import (
 	"github.com/PuerkitoBio/goquery"
-	"github.com/Strayneko/KomikcastAPI/configs"
-	"github.com/Strayneko/KomikcastAPI/services/scraper"
+	"github.com/Strayneko/KomikcastAPI/interfaces"
 	"github.com/Strayneko/KomikcastAPI/types"
 	"github.com/gofiber/fiber/v2"
-	"time"
+	"net/http"
+	"regexp"
+	"strconv"
+	"strings"
 )
 
-type Service interface {
-	GetComicList(ctx *fiber.Ctx) []types.ComicType
-	GetComicDetail(selector *goquery.Selection) types.ComicType
-}
+var Doc *goquery.Document
 
 type comic struct {
-	service Service
+	service interfaces.ComicService
 }
 
-func New() Service {
+func New(doc *goquery.Document) interfaces.ComicService {
+	Doc = doc
 	return &comic{}
 }
 
-func (s *comic) GetComicList(ctx *fiber.Ctx) []types.ComicType {
-	cacheKey := "comicList"
-	if cached, found := configs.Cache.Get(cacheKey); found {
-		return cached.([]types.ComicType)
-	}
-
-	scraperService := scraper.New()
-	doc := scraperService.Scrape("?s=3")
-	if doc == nil {
-		return nil
-	}
-
+// GetComicList retrieves a list of comics by extracting details from the provided context using goquery.
+func (service *comic) GetComicList(ctx *fiber.Ctx) ([]types.ComicType, *fiber.Error) {
 	var comicList []types.ComicType
-	// Find the comic details
-	doc.Find(".list-update .list-update_items .list-update_items-wrapper .list-update_item").Each(func(i int, selector *goquery.Selection) {
-		// For each item found, get the information
-		comicList = append(comicList, s.GetComicDetail(selector))
-	})
+	if Doc == nil {
+		return nil, fiber.NewError(http.StatusServiceUnavailable, "Service Unavailable")
+	}
 
-	configs.Cache.Set(cacheKey, comicList, 30*time.Minute)
-	return comicList
+	items := Doc.Find(".komiklist .list-update .list-update_items .list-update_items-wrapper .list-update_item")
+	if items.Length() == 0 {
+		return nil, fiber.NewError(http.StatusNotFound, "Page not found.")
+	}
+
+	// Find the comic details
+	items.Each(func(i int, selector *goquery.Selection) {
+		// For each item found, get the information
+		comicList = append(comicList, service.ExtractComicDetail(selector))
+	})
+	return comicList, nil
 }
 
-func (s *comic) GetComicDetail(selector *goquery.Selection) types.ComicType {
-	title := selector.Find(".list-update_item-info h3.title").Text()
+// ExtractComicDetail extracts detailed information about a comic from the provided goquery selector.
+// The function gathers various attributes such as the comic's URL, cover image, type, last chapter details,
+// and rating information, and returns a ComicType struct populated with this data.
+
+func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.ComicType {
+	comicUrl, _ := selector.Find("a.data-tooltip").Attr("href")
 	listUpdateItem := selector.Find(".list-update_item-image")
+	listUpdateItemInfo := selector.Find(".list-update_item-info")
 	coverImage, _ := listUpdateItem.Find("img.ts-post-image").Attr("src")
 	comicType := listUpdateItem.Find("span.type").Text()
+	lastChapter := listUpdateItemInfo.Find(".other .chapter").Text()
+	lastChapterUrl, _ := listUpdateItemInfo.Find(".other .chapter").Attr("href")
+	title := listUpdateItemInfo.Find("h3.title").Text()
+	starRating, _ := listUpdateItemInfo.Find(".other .rate .rating .rating-bintang span").Attr("style")
+	ratingScore := listUpdateItemInfo.Find(".other .rate .rating .numscore").Text()
+
 	return types.ComicType{
 		Title:      title,
 		CoverImage: coverImage,
 		ComicType:  comicType,
+		Url:        comicUrl,
+		LastChapter: types.ComicChapterType{
+			LastChapter:    strings.TrimSpace(lastChapter),
+			LastChapterUrl: lastChapterUrl,
+		},
+		ComicRating: types.ComicRatingType{
+			StarRating: service.ExtractStarRatingValue(starRating),
+			Rating:     ratingScore,
+		},
 	}
+}
+
+// ExtractStarRatingValue extracts the star rating value from a width css attribute Ex: width: 70%, will result 3.5.
+// It uses a regular expression to find and return the number in the string.
+func (service *comic) ExtractStarRatingValue(starRating string) int8 {
+	// Compile the regex pattern to extract the number
+	re := regexp.MustCompile(`\d+(\.\d+)?`)
+
+	// Find the match
+	match := re.FindString(starRating)
+
+	if len(match) == 0 {
+		return 0
+	}
+	res, err := strconv.Atoi(match)
+	if err != nil {
+		return 0
+	}
+
+	return int8(res / 20)
+
+}
+
+// GetLastPageNumber retrieves the last page number from the document.
+// It checks the pagination elements and extracts the highest page number.
+func (service *comic) GetLastPageNumber() int16 {
+	if Doc == nil {
+		return 0
+	}
+
+	pageList := Doc.Find(".komiklist .pagination .page-numbers")
+	if pageList.Length() == 0 {
+		return 0
+	}
+
+	lastPageIsNumber := regexp.MustCompile(`\d`).MatchString(pageList.Last().Text())
+	if !lastPageIsNumber {
+		pageList = pageList.Slice(0, pageList.Length()-1)
+	}
+
+	lastPage, err := strconv.ParseInt(pageList.Last().Text(), 10, 16)
+	if err != nil {
+		return 0
+	}
+
+	return int16(lastPage)
 }
