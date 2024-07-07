@@ -3,6 +3,7 @@ package scraper
 import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Strayneko/KomikcastAPI/configs"
+	"github.com/gofiber/fiber/v2"
 	"log"
 	"net/http"
 )
@@ -10,7 +11,7 @@ import (
 var KomikcastUrl string
 
 type Service interface {
-	Scrape(path string) *goquery.Document
+	Scrape(path string) (*goquery.Document, *fiber.Error)
 }
 
 type scrapper struct {
@@ -22,20 +23,25 @@ func New() Service {
 	return &scrapper{}
 }
 
-func (s *scrapper) Scrape(path string) *goquery.Document {
+func (s *scrapper) Scrape(path string) (*goquery.Document, *fiber.Error) {
 	res, err := http.Get(KomikcastUrl + path)
+
+	if err != nil {
+		log.Printf("Cannot conenct to " + KomikcastUrl + path)
+		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot connect to "+KomikcastUrl+". Reason: "+err.Error())
+	}
+
 	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
-		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
-		return nil
+		log.Printf("status code error: %d %s", res.StatusCode, res.Status)
+		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot connect to "+KomikcastUrl+". Reason: "+res.Status)
 	}
 
 	// Load the HTML document
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Fatal(err)
-		return nil
+		log.Printf("Cannot parse response from %s", KomikcastUrl+path)
+		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot parse response from "+KomikcastUrl+". Reason: "+err.Error())
 	}
-
-	return doc
+	return doc, nil
 }
