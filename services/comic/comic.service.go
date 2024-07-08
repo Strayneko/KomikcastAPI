@@ -29,7 +29,7 @@ func (service *comic) GetComicList(ctx *fiber.Ctx) ([]types.ComicType, *fiber.Er
 		return nil, fiber.NewError(http.StatusServiceUnavailable, "Service Unavailable")
 	}
 
-	items := Doc.Find(".komiklist .list-update .list-update_items .list-update_items-wrapper .list-update_item")
+	items := Doc.Find("#content .wrapper .list-update .list-update_items .list-update_items-wrapper .list-update_item")
 	if items.Length() == 0 {
 		return nil, fiber.NewError(http.StatusNotFound, "Page not found.")
 	}
