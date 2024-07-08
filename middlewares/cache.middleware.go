@@ -9,14 +9,15 @@ import (
 	"time"
 )
 
-func CacheMiddleware() fiber.Handler {
+func CacheMiddleware(param string, defaultVal string) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
+		key := "?" + param + ctx.Query(param, defaultVal)
 		if ctx.Method() != "GET" {
 			// Only cache GET requests
 			return ctx.Next()
 		}
 
-		cacheKey := ctx.Path() + "?page=" + ctx.Query("page", "1") // Generate a cache key from the request path and query parameters
+		cacheKey := ctx.Path() + key // Generate a cache key from the request path and query parameters
 		// Check if the response is already in the cache
 		if cached, found := configs.Cache.Get(cacheKey); found {
 			return ctx.JSON(cached)

@@ -2,35 +2,55 @@ package comic
 
 import (
 	"github.com/PuerkitoBio/goquery"
+	"github.com/Strayneko/KomikcastAPI/helpers"
+	"github.com/Strayneko/KomikcastAPI/interfaces"
 	"github.com/Strayneko/KomikcastAPI/services/comic"
 	"github.com/Strayneko/KomikcastAPI/services/scraper"
 	"github.com/Strayneko/KomikcastAPI/types"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
-	"strconv"
 )
 
-type Controller interface {
-	GetComicList(ctx *fiber.Ctx) error
+var Helper interfaces.Helper
+
+type handler struct {
+	controller interfaces.ComicController
 }
 
-func GetComicList(ctx *fiber.Ctx) error {
+func NewController() interfaces.ComicController {
+	Helper = helpers.New()
+	return &handler{}
+}
+
+func (h *handler) GetComicList(ctx *fiber.Ctx) error {
+	var currentPage int16
 	path := "daftar-komik/"
-	page := ctx.Query("page", "1")
-	currentPage, err := strconv.ParseInt(page, 10, 16)
 
-	if err != nil || currentPage <= 0 {
-		return responseError(ctx, fiber.NewError(http.StatusBadRequest, "Bad Request: Invalid page"))
+	if err := Helper.ValidatePage(ctx, &currentPage); err != nil {
+		return Helper.ResponseError(ctx, err)
 	}
 
-	if len(page) > 0 {
-		path += "page/" + page
+	if currentPage > 0 {
+		path += "page/" + string(currentPage)
 	}
-
-	return baseGetComicList(ctx, path, int16(currentPage))
+	return h.BaseGetComicList(ctx, path, currentPage)
 }
 
-func baseGetComicList(ctx *fiber.Ctx, path string, page int16) error {
+func (h *handler) GetSearchedComics(ctx *fiber.Ctx) error {
+	var currentPage int16
+	query := ctx.Query("query", "")
+	path := "?s=" + query
+
+	if err := Helper.ValidatePage(ctx, &currentPage); err != nil {
+		return Helper.ResponseError(ctx, err)
+	}
+	if currentPage > 0 {
+		path = "page/" + string(currentPage) + "/?s=" + query
+	}
+	return h.BaseGetComicList(ctx, path, 1)
+}
+
+func (h *handler) BaseGetComicList(ctx *fiber.Ctx, path string, currentPage int16) error {
 	var doc *goquery.Document
 	var comicList []types.ComicType
 	var err *fiber.Error
@@ -39,7 +59,7 @@ func baseGetComicList(ctx *fiber.Ctx, path string, page int16) error {
 
 	doc, err = scraperService.Scrape(path)
 	if err != nil {
-		return responseError(ctx, err)
+		return Helper.ResponseError(ctx, err)
 	}
 
 	comicService := comic.New(doc)
@@ -47,24 +67,16 @@ func baseGetComicList(ctx *fiber.Ctx, path string, page int16) error {
 	lastPage := comicService.GetLastPageNumber()
 
 	if err != nil {
-		return responseError(ctx, err)
+		return Helper.ResponseError(ctx, err)
 	}
 
 	return ctx.Status(http.StatusOK).JSON(types.ResponseType{
 		Status:      true,
 		Code:        http.StatusOK,
 		LastPage:    lastPage,
-		CurrentPage: page,
+		CurrentPage: currentPage,
 		Total:       int16(len(comicList)),
 		Message:     "List of comics successfully fetched.",
 		Data:        &comicList,
-	})
-}
-
-func responseError(ctx *fiber.Ctx, err *fiber.Error) error {
-	return ctx.Status(err.Code).JSON(types.ResponseType{
-		Status:  false,
-		Code:    int16(err.Code),
-		Message: err.Message,
 	})
 }
