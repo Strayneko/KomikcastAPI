@@ -11,6 +11,9 @@ func InitApiRoute(route fiber.Router) {
 }
 
 func initComicRoute(route fiber.Router) {
-	comicRoute := route.Group("/comic", middlewares.CacheMiddleware())
-	comicRoute.Get("/list", comic.GetComicList)
+	controller := comic.NewController()
+	comicRoute := route.Group("/comic")
+
+	comicRoute.Get("/list", middlewares.CacheMiddleware("page", "1"), controller.GetComicList)
+	comicRoute.Get("/search", controller.GetSearchedComics)
 }

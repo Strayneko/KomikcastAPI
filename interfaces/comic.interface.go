@@ -12,3 +12,9 @@ type ComicService interface {
 	ExtractStarRatingValue(starRating string) int8
 	GetLastPageNumber() int16
 }
+
+type ComicController interface {
+	GetComicList(ctx *fiber.Ctx) error
+	GetSearchedComics(ctx *fiber.Ctx) error
+	BaseGetComicList(ctx *fiber.Ctx, path string, currentPage int16) error
+}
