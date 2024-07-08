@@ -1,0 +1,2 @@
+start:
+	clear & go run .
