@@ -23,12 +23,13 @@ func InitLogger() {
 	log.SetOutput(file)
 }
 
+// createLogDirectory ensures that the "logs" directory exists.
+// If the directory does not exist, it creates it with appropriate permissions.
 func createLogDirectory() {
 	// Define the logs directory
 	logsDir := "logs"
-
-	// Check if the logs directory exists
-	if _, err := os.Stat(logsDir); os.IsExist(err) {
+	exist, _ := os.Stat(logsDir)
+	if exist != nil {
 		return
 	}
 
@@ -36,6 +37,5 @@ func createLogDirectory() {
 	err := os.Mkdir(logsDir, os.ModePerm)
 	if err != nil {
 		fmt.Printf("Error creating logs directory: %v\n", err)
-		return
 	}
 }
