@@ -7,14 +7,15 @@ import (
 )
 
 type ComicService interface {
-	GetComicList(ctx *fiber.Ctx) ([]types.ComicType, *fiber.Error)
+	ExtractComicList(ctx *fiber.Ctx) ([]types.ComicType, *fiber.Error)
 	ExtractComicDetail(selector *goquery.Selection) types.ComicType
 	ExtractStarRatingValue(starRating string) int8
 	GetLastPageNumber() int16
+	GetComicList(ctx *fiber.Ctx, path string, currentPage int16) error
 }
 
 type ComicController interface {
 	GetComicList(ctx *fiber.Ctx) error
 	GetSearchedComics(ctx *fiber.Ctx) error
-	BaseGetComicList(ctx *fiber.Ctx, path string, currentPage int16) error
+	GetProjectComics(ctx *fiber.Ctx) error
 }
