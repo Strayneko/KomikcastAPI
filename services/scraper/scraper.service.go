@@ -23,6 +23,8 @@ func New() Service {
 	return &scrapper{}
 }
 
+// Scrape fetches and parses the HTML document from the given path on the Komikcast website.
+// It handles HTTP requests and responses, and returns a goquery.Document for further processing.
 func (s *scrapper) Scrape(path string) (*goquery.Document, *fiber.Error) {
 	res, err := http.Get(KomikcastUrl + path)
 
