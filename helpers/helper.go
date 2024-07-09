@@ -1,11 +1,12 @@
 package helpers
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/Strayneko/KomikcastAPI/interfaces"
 	"github.com/Strayneko/KomikcastAPI/types"
 	"github.com/gofiber/fiber/v2"
-	"net/http"
-	"strconv"
 )
 
 type helper struct {
@@ -15,17 +16,18 @@ type helper struct {
 func New() interfaces.Helper {
 	return &helper{}
 }
-func (h *helper) ValidatePage(ctx *fiber.Ctx, currentPage *int16) *fiber.Error {
+
+// ValidatePage validates the "page" query parameter from the request context.
+// It ensures that the page is a positive integer and converts it to int16.
+func (h *helper) ValidatePage(ctx *fiber.Ctx) (int16, *fiber.Error) {
 	page := ctx.Query("page", "1")
 	curPage, err := strconv.ParseInt(page, 10, 16)
 
 	if err != nil || curPage <= 0 {
-		return fiber.NewError(http.StatusBadRequest, "Bad Request: Invalid page")
+		return 0, fiber.NewError(http.StatusBadRequest, "Bad Request: Invalid page")
 	}
 
-	cp := int16(curPage)
-	currentPage = &cp
-	return nil
+	return int16(curPage), nil
 }
 
 func (h *helper) ResponseError(ctx *fiber.Ctx, err *fiber.Error) error {
