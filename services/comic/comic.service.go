@@ -2,7 +2,9 @@ package comic
 
 import (
 	"github.com/PuerkitoBio/goquery"
+	"github.com/Strayneko/KomikcastAPI/helpers"
 	"github.com/Strayneko/KomikcastAPI/interfaces"
+	"github.com/Strayneko/KomikcastAPI/services/scraper"
 	"github.com/Strayneko/KomikcastAPI/types"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
@@ -12,24 +14,25 @@ import (
 )
 
 var Doc *goquery.Document
+var Helper interfaces.Helper
 
 type comic struct {
 	service interfaces.ComicService
 }
 
-func New(doc *goquery.Document) interfaces.ComicService {
-	Doc = doc
+func New() interfaces.ComicService {
+	Helper = helpers.New()
 	return &comic{}
 }
 
-// GetComicList retrieves a list of comics by extracting details from the provided context using goquery.
-func (service *comic) GetComicList(ctx *fiber.Ctx) ([]types.ComicType, *fiber.Error) {
+// ExtractComicList extract a list of comics by extracting details from the provided context using goquery.
+func (service *comic) ExtractComicList(ctx *fiber.Ctx) ([]types.ComicType, *fiber.Error) {
 	var comicList []types.ComicType
 	if Doc == nil {
 		return nil, fiber.NewError(http.StatusServiceUnavailable, "Service Unavailable")
 	}
 
-	items := Doc.Find("#content .wrapper .list-update .list-update_items .list-update_items-wrapper .list-update_item")
+	items := Doc.Find("#content .wrapper .list-update_items .list-update_items-wrapper .list-update_item")
 	if items.Length() == 0 {
 		return nil, fiber.NewError(http.StatusNotFound, "Page not found.")
 	}
@@ -118,4 +121,35 @@ func (service *comic) GetLastPageNumber() int16 {
 	}
 
 	return int16(lastPage)
+}
+
+// GetComicList handles fetching a list of comics from a given path and returns it in the response context.
+// It uses a scraper service to scrape the comics from the specified path and then extracts the list of comics.
+func (service *comic) GetComicList(ctx *fiber.Ctx, path string, currentPage int16) error {
+	var comicList []types.ComicType
+	var err *fiber.Error
+
+	scraperService := scraper.New()
+
+	Doc, err = scraperService.Scrape(path)
+	if err != nil {
+		return Helper.ResponseError(ctx, err)
+	}
+
+	comicList, err = service.ExtractComicList(ctx)
+	lastPage := service.GetLastPageNumber()
+
+	if err != nil {
+		return Helper.ResponseError(ctx, err)
+	}
+
+	return ctx.Status(http.StatusOK).JSON(types.ResponseType{
+		Status:      true,
+		Code:        http.StatusOK,
+		LastPage:    lastPage,
+		CurrentPage: currentPage,
+		Total:       int16(len(comicList)),
+		Message:     "List of comics successfully fetched.",
+		Data:        &comicList,
+	})
 }
