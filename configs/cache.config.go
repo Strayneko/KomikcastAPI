@@ -1,12 +1,14 @@
 package configs
 
 import (
-	"github.com/patrickmn/go-cache"
-	"time"
+	"github.com/redis/go-redis/v9"
 )
 
-var Cache *cache.Cache
+var Cache *redis.Client
 
 func InitCache() {
-	Cache = cache.New(5*time.Minute, 10*time.Minute)
+	Cache = redis.NewClient(&redis.Options{
+		Addr: ViperEnv.Get("REDIS_HOST").(string) + ":" + ViperEnv.Get("REDIS_PORT").(string),
+		DB:   0,
+	})
 }
