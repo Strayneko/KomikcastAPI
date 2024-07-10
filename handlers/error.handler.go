@@ -24,7 +24,7 @@ func (h *handler) ErrorHandler(ctx *fiber.Ctx, err error) error {
 		code = e.Code
 	}
 
-	return ctx.Status(code).JSON(types.ResponseType{
+	return ctx.Status(code).JSON(&types.ResponseType{
 		Status:  false,
 		Code:    int16(code),
 		Message: err.Error(),

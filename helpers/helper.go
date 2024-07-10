@@ -31,7 +31,7 @@ func (h *helper) ValidatePage(ctx *fiber.Ctx) (int16, *fiber.Error) {
 }
 
 func (h *helper) ResponseError(ctx *fiber.Ctx, err *fiber.Error) error {
-	return ctx.Status(err.Code).JSON(types.ResponseType{
+	return ctx.Status(err.Code).JSON(&types.ResponseType{
 		Status:  false,
 		Code:    int16(err.Code),
 		Message: err.Message,

@@ -143,7 +143,7 @@ func (service *comic) GetComicList(ctx *fiber.Ctx, path string, currentPage int1
 		return Helper.ResponseError(ctx, err)
 	}
 
-	return ctx.Status(http.StatusOK).JSON(types.ResponseType{
+	return ctx.Status(http.StatusOK).JSON(&types.ResponseType{
 		Status:      true,
 		Code:        http.StatusOK,
 		LastPage:    lastPage,
