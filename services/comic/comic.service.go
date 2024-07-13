@@ -105,9 +105,9 @@ func (service *comic) GetLastPageNumber() int16 {
 		return 0
 	}
 
-	pageList := Doc.Find(".komiklist .pagination .page-numbers")
+	pageList := Doc.Find("#content .pagination .page-numbers")
 	if pageList.Length() == 0 {
-		return 0
+		return 1
 	}
 
 	lastPageIsNumber := regexp.MustCompile(`\d`).MatchString(pageList.Last().Text())
@@ -117,9 +117,8 @@ func (service *comic) GetLastPageNumber() int16 {
 
 	lastPage, err := strconv.ParseInt(pageList.Last().Text(), 10, 16)
 	if err != nil {
-		return 0
+		return 1
 	}
-
 	return int16(lastPage)
 }
 
