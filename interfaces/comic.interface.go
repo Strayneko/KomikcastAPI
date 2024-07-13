@@ -10,7 +10,6 @@ type ComicService interface {
 	ExtractComicList(ctx *fiber.Ctx) ([]types.ComicListInfoType, *fiber.Error)
 	ExtractComicDetail(selector *goquery.Selection) types.ComicListInfoType
 	ExtractStarRatingValue(starRating string) int8
-	GetLastPageNumber() int16
 	GetComicList(ctx *fiber.Ctx, path string, currentPage int16) error
 }
 

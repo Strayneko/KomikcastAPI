@@ -42,7 +42,6 @@ func (service *comic) ExtractComicList(ctx *fiber.Ctx) ([]types.ComicListInfoTyp
 	if items.Length() == 0 {
 		return nil, fiber.NewError(http.StatusNotFound, "Page not found.")
 	}
-
 	// Find the comic details
 	items.Each(func(i int, selector *goquery.Selection) {
 		// For each item found, get the information
@@ -104,30 +103,6 @@ func (service *comic) ExtractStarRatingValue(starRating string) int8 {
 
 }
 
-// GetLastPageNumber retrieves the last page number from the document.
-// It checks the pagination elements and extracts the highest page number.
-func (service *comic) GetLastPageNumber() int16 {
-	if Doc == nil {
-		return 0
-	}
-
-	pageList := Doc.Find("#content .pagination .page-numbers")
-	if pageList.Length() == 0 {
-		return 1
-	}
-
-	lastPageIsNumber := regexp.MustCompile(`\d`).MatchString(pageList.Last().Text())
-	if !lastPageIsNumber {
-		pageList = pageList.Slice(0, pageList.Length()-1)
-	}
-
-	lastPage, err := strconv.ParseInt(pageList.Last().Text(), 10, 16)
-	if err != nil {
-		return 1
-	}
-	return int16(lastPage)
-}
-
 // GetComicList handles fetching a list of comics from a given path and returns it in the response context.
 // It uses a scraper service to scrape the comics from the specified path and then extracts the list of comics.
 func (service *comic) GetComicList(ctx *fiber.Ctx, path string, currentPage int16) error {
@@ -141,7 +116,6 @@ func (service *comic) GetComicList(ctx *fiber.Ctx, path string, currentPage int1
 		comicList = cachedComicList
 	} else {
 		scraperService := scraper.New()
-
 		Doc, err = scraperService.Scrape(path)
 		if err != nil {
 			return Helper.ResponseError(ctx, err)
