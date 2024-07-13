@@ -137,6 +137,11 @@ func (service *comic) GetComicList(ctx *fiber.Ctx, path string, currentPage int1
 
 	comicList, err = service.ExtractComicList(ctx)
 	lastPage := service.GetLastPageNumber()
+	prevPage := currentPage - 1
+
+	if prevPage < 0 {
+		prevPage = 0
+	}
 
 	if err != nil {
 		return Helper.ResponseError(ctx, err)
@@ -145,6 +150,7 @@ func (service *comic) GetComicList(ctx *fiber.Ctx, path string, currentPage int1
 	return ctx.Status(http.StatusOK).JSON(&types.ResponseType{
 		Status:      true,
 		Code:        http.StatusOK,
+		PrevPage:    prevPage,
 		LastPage:    lastPage,
 		CurrentPage: currentPage,
 		Total:       int16(len(comicList)),
