@@ -1,16 +1,17 @@
 package comic
 
 import (
+	"net/http"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Strayneko/KomikcastAPI/helpers"
 	"github.com/Strayneko/KomikcastAPI/interfaces"
 	"github.com/Strayneko/KomikcastAPI/services/scraper"
 	"github.com/Strayneko/KomikcastAPI/types"
 	"github.com/gofiber/fiber/v2"
-	"net/http"
-	"regexp"
-	"strconv"
-	"strings"
 )
 
 var Doc *goquery.Document
@@ -26,8 +27,8 @@ func New() interfaces.ComicService {
 }
 
 // ExtractComicList extract a list of comics by extracting details from the provided context using goquery.
-func (service *comic) ExtractComicList(ctx *fiber.Ctx) ([]types.ComicType, *fiber.Error) {
-	var comicList []types.ComicType
+func (service *comic) ExtractComicList(ctx *fiber.Ctx) ([]types.ComicListInfoType, *fiber.Error) {
+	var comicList []types.ComicListInfoType
 	if Doc == nil {
 		return nil, fiber.NewError(http.StatusServiceUnavailable, "Service Unavailable")
 	}
@@ -47,9 +48,8 @@ func (service *comic) ExtractComicList(ctx *fiber.Ctx) ([]types.ComicType, *fibe
 
 // ExtractComicDetail extracts detailed information about a comic from the provided goquery selector.
 // The function gathers various attributes such as the comic's URL, cover image, type, last chapter details,
-// and rating information, and returns a ComicType struct populated with this data.
-
-func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.ComicType {
+// and rating information, and returns a ComicListInfoType struct populated with this data.
+func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.ComicListInfoType {
 	comicUrl, _ := selector.Find("a.data-tooltip").Attr("href")
 	listUpdateItem := selector.Find(".list-update_item-image")
 	listUpdateItemInfo := selector.Find(".list-update_item-info")
@@ -61,16 +61,16 @@ func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.Comi
 	starRating, _ := listUpdateItemInfo.Find(".other .rate .rating .rating-bintang span").Attr("style")
 	ratingScore := listUpdateItemInfo.Find(".other .rate .rating .numscore").Text()
 
-	return types.ComicType{
+	return types.ComicListInfoType{
 		Title:      title,
 		CoverImage: coverImage,
-		ComicType:  comicType,
+		ComicType:  types.ComicType(comicType),
 		Url:        comicUrl,
-		LastChapter: types.ComicChapterType{
+		LastChapter: &types.ComicChapterType{
 			LastChapter:    strings.TrimSpace(lastChapter),
 			LastChapterUrl: lastChapterUrl,
 		},
-		ComicRating: types.ComicRatingType{
+		ComicRating: &types.ComicRatingType{
 			StarRating: service.ExtractStarRatingValue(starRating),
 			Rating:     ratingScore,
 		},
@@ -126,7 +126,7 @@ func (service *comic) GetLastPageNumber() int16 {
 // GetComicList handles fetching a list of comics from a given path and returns it in the response context.
 // It uses a scraper service to scrape the comics from the specified path and then extracts the list of comics.
 func (service *comic) GetComicList(ctx *fiber.Ctx, path string, currentPage int16) error {
-	var comicList []types.ComicType
+	var comicList []types.ComicListInfoType
 	var err *fiber.Error
 
 	scraperService := scraper.New()
