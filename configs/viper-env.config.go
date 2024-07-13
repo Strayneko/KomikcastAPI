@@ -9,6 +9,7 @@ var ViperEnv *viper.Viper
 
 func InitViperEnvConfig() {
 	ViperEnv = viper.New()
+	ViperEnv.AddConfigPath("/")
 	ViperEnv.SetConfigFile(".env")
 	err := ViperEnv.ReadInConfig()
 
