@@ -63,6 +63,7 @@ func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.Comi
 	title = strings.TrimSpace(title)
 	starRating, _ := selector.Find(".rt .rating .rtp span").Attr("style")
 	ratingScore := selector.Find(".rt .rating div.numscore").Text()
+	slug := Helper.ExtractSlug(comicUrl)
 
 	if len(splitType) > 0 {
 		comicType = splitType[len(splitType)-1]
@@ -74,6 +75,7 @@ func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.Comi
 		ComicType:   types.ComicType(comicType),
 		Url:         comicUrl,
 		LastChapter: strings.TrimSpace(lastChapter),
+		Slug:        slug,
 
 		ComicRating: &types.ComicRatingType{
 			StarRating: service.ExtractStarRatingValue(starRating),

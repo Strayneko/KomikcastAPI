@@ -7,6 +7,7 @@ type ComicListInfoType struct {
 	Url         string           `json:"url"`
 	LastChapter string           `json:"last_chapter"`
 	ComicRating *ComicRatingType `json:"comic_rating"`
+	Slug        string           `json:"slug"`
 }
 
 type ComicRatingType struct {
@@ -41,19 +42,25 @@ type ComicOrderType struct {
 }
 
 type ComicDetailType struct {
-	ThumbnailImage string              `json:"thumbnail_image"`
-	Title          string              `json:"title"`
-	Alias          string              `json:"alias"`
-	ComicRating    ComicRatingType     `json:"comic_rating"`
-	Genres         []string            `json:"genres"`
-	ReleasedDate   string              `json:"released_date"`
-	Status         ComicStatusType     `json:"status"`
-	TotalChapters  string              `json:"total_chapters"`
-	Author         string              `json:"author"`
-	ComicType      ComicType           `json:"comic_type"`
-	UpdatedAt      string              `json:"updated_at"`
-	Summary        string              `json:"summary"`
-	Chapters       []ChapterDetailType `json:"chapters"`
+	Title         string              `json:"title"`
+	Alias         string              `json:"alias"`
+	CoverImage    string              `json:"cover_image"`
+	ComicRating   ComicRatingType     `json:"comic_rating"`
+	Summary       string              `json:"summary"`
+	FirstChapter  string              `json:"first_chapter"`
+	LatestChapter string              `json:"latest_chapter"`
+	Status        ComicStatusType     `json:"status"`
+	ReleasedDate  string              `json:"released_date"`
+	Artist        string              `json:"artist"`
+	UpdatedAt     string              `json:"updated_at"`
+	ComicType     ComicType           `json:"comic_type"`
+	Author        string              `json:"author"`
+	Serialization string              `json:"serialization"`
+	PostedOn      string              `json:"posted_on"`
+	Views         string              `json:"views"`
+	Genres        []string            `json:"genres"`
+	Chapters      []ChapterDetailType `json:"chapters"`
+	RelatedSeries []ComicListInfoType `json:"related_series"`
 }
 
 type ChapterDetailType struct {

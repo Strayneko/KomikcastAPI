@@ -3,6 +3,7 @@ package helpers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Strayneko/KomikcastAPI/interfaces"
 	"github.com/Strayneko/KomikcastAPI/types"
@@ -36,4 +37,16 @@ func (h *helper) ResponseError(ctx *fiber.Ctx, err *fiber.Error) error {
 		Code:    int16(err.Code),
 		Message: err.Message,
 	})
+}
+
+func (h *helper) ExtractSlug(url string) string {
+	slug := strings.TrimSuffix(url, "/")
+
+	splitedSlug := strings.Split(slug, "/")
+
+	if len(splitedSlug) == 0 {
+		return ""
+	}
+
+	return splitedSlug[len(splitedSlug)-1]
 }
