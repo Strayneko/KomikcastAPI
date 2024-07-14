@@ -10,10 +10,13 @@ func InitApiRoute(route fiber.Router) {
 }
 
 func initComicRoute(route fiber.Router) {
-	controller := comic.NewController()
+	list := comic.NewComicListController()
+	detail := comic.NewComicDetailController()
 	comicRoute := route.Group("/comic")
 
-	comicRoute.Get("/list", controller.GetComicList)
-	comicRoute.Get("/search", controller.GetSearchedComics)
-	comicRoute.Get("/projects", controller.GetProjectComics)
+	comicRoute.Get("/list", list.GetComicList)
+	comicRoute.Get("/search", list.GetSearchedComics)
+	comicRoute.Get("/projects", list.GetProjectComics)
+
+	comicRoute.Get("/detail/:slug", detail.GetComicDetail)
 }
