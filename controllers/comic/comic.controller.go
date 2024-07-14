@@ -62,3 +62,17 @@ func (h *handler) GetSearchedComics(ctx *fiber.Ctx) error {
 	}
 	return ComicListService.GetComicList(ctx, path, currentPage)
 }
+
+func (h *handler) GetProjectComics(ctx *fiber.Ctx) error {
+	path := "project/"
+	currentPage, err := Helper.ValidatePage(ctx)
+
+	if err != nil {
+		return Helper.ResponseError(ctx, err)
+	}
+
+	if currentPage > 0 {
+		path += "page/" + strconv.Itoa(int(currentPage))
+	}
+	return ComicListService.GetComicList(ctx, path, currentPage)
+}

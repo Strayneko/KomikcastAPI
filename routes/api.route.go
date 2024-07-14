@@ -15,4 +15,5 @@ func initComicRoute(route fiber.Router) {
 
 	comicRoute.Get("/list", controller.GetComicList)
 	comicRoute.Get("/search", controller.GetSearchedComics)
+	comicRoute.Get("/projects", controller.GetProjectComics)
 }

@@ -16,4 +16,5 @@ type ComicListService interface {
 type ComicController interface {
 	GetComicList(ctx *fiber.Ctx) error
 	GetSearchedComics(ctx *fiber.Ctx) error
+	GetProjectComics(ctx *fiber.Ctx) error
 }
