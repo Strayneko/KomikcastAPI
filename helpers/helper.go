@@ -11,17 +11,17 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type helper struct {
+type Helper struct {
 	controllerHelper interfaces.Helper
 }
 
-func New() interfaces.Helper {
-	return &helper{}
+func NewHelper() interfaces.Helper {
+	return &Helper{}
 }
 
 // ValidatePage validates the "page" query parameter from the request context.
 // It ensures that the page is a positive integer and converts it to int16.
-func (h *helper) ValidatePage(ctx *fiber.Ctx) (int16, *fiber.Error) {
+func (h *Helper) ValidatePage(ctx *fiber.Ctx) (int16, *fiber.Error) {
 	page := ctx.Query("page", "1")
 	curPage, err := strconv.ParseInt(page, 10, 16)
 
@@ -32,7 +32,7 @@ func (h *helper) ValidatePage(ctx *fiber.Ctx) (int16, *fiber.Error) {
 	return int16(curPage), nil
 }
 
-func (h *helper) ResponseError(ctx *fiber.Ctx, err *fiber.Error) error {
+func (h *Helper) ResponseError(ctx *fiber.Ctx, err *fiber.Error) error {
 	return ctx.Status(err.Code).JSON(&types.ResponseType{
 		Status:  false,
 		Code:    int16(err.Code),
@@ -40,7 +40,7 @@ func (h *helper) ResponseError(ctx *fiber.Ctx, err *fiber.Error) error {
 	})
 }
 
-func (h *helper) ExtractSlug(url string) string {
+func (h *Helper) ExtractSlug(url string) string {
 	slug := strings.TrimSuffix(url, "/")
 
 	splitedSlug := strings.Split(slug, "/")
@@ -54,7 +54,7 @@ func (h *helper) ExtractSlug(url string) string {
 
 // ExtractStarRatingValue extracts the star rating value from a width css attribute Ex: width: 70%, will result 3.5.
 // It uses a regular expression to find and return the number in the string.
-func (h *helper) ExtractStarRatingValue(starRating string) int8 {
+func (h *Helper) ExtractStarRatingValue(starRating string) int8 {
 	// Compile the regex pattern to extract the number
 	re := regexp.MustCompile(`\d+(\.\d+)?`)
 

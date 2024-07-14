@@ -9,34 +9,36 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/Strayneko/KomikcastAPI/helpers"
 	"github.com/Strayneko/KomikcastAPI/interfaces"
-	"github.com/Strayneko/KomikcastAPI/services/scraper"
 	"github.com/Strayneko/KomikcastAPI/types"
 	"github.com/gofiber/fiber/v2"
 )
 
-var Doc *goquery.Document
-var Helper interfaces.Helper
-var RdbCtx context.Context = context.Background()
-
-type comic struct {
-	service interfaces.ComicListService
+type ComicListService struct {
+	service        interfaces.ComicListService
+	RdbCtx         context.Context
+	Doc            *goquery.Document
+	Helper         interfaces.Helper
+	ScraperService interfaces.ScraperService
 }
 
-func New() interfaces.ComicListService {
-	Helper = helpers.New()
-	return &comic{}
+func NewComicListService(helper interfaces.Helper, scraperService interfaces.ScraperService) interfaces.ComicListService {
+	return &ComicListService{
+		RdbCtx:         context.Background(),
+		Doc:            nil,
+		Helper:         helper,
+		ScraperService: scraperService,
+	}
 }
 
 // ExtractComicList extract a list of comics by extracting details from the provided context using goquery.
-func (service *comic) ExtractComicList(ctx *fiber.Ctx) ([]types.ComicListInfoType, *fiber.Error) {
+func (service *ComicListService) ExtractComicList(ctx *fiber.Ctx) ([]types.ComicListInfoType, *fiber.Error) {
 	var comicList []types.ComicListInfoType
-	if Doc == nil {
+	if service.Doc == nil {
 		return nil, fiber.NewError(http.StatusServiceUnavailable, "Service Unavailable")
 	}
 
-	items := Doc.Find("#content .wrapper .listupd .bs .bsx")
+	items := service.Doc.Find("#content .wrapper .listupd .bs .bsx")
 	if items.Length() == 0 {
 		return nil, fiber.NewError(http.StatusNotFound, "Page not found.")
 	}
@@ -51,7 +53,7 @@ func (service *comic) ExtractComicList(ctx *fiber.Ctx) ([]types.ComicListInfoTyp
 // ExtractComicDetail extracts detailed information about a comic from the provided goquery selector.
 // The function gathers various attributes such as the comic's URL, cover image, type, last chapter details,
 // and rating information, and returns a ComicListInfoType struct populated with this data.
-func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.ComicListInfoType {
+func (service *ComicListService) ExtractComicDetail(selector *goquery.Selection) types.ComicListInfoType {
 	comicUrl, _ := selector.Find("a").Attr("href")
 	coverImage, _ := selector.Find("img.ts-post-image").Attr("src")
 	comicType, _ := selector.Find("span.type").Attr("class")
@@ -61,7 +63,7 @@ func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.Comi
 	title = strings.TrimSpace(title)
 	starRating, _ := selector.Find(".rt .rating .rtp span").Attr("style")
 	ratingScore := selector.Find(".rt .rating div.numscore").Text()
-	slug := Helper.ExtractSlug(comicUrl)
+	slug := service.Helper.ExtractSlug(comicUrl)
 
 	if len(splitType) > 0 {
 		comicType = splitType[len(splitType)-1]
@@ -76,7 +78,7 @@ func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.Comi
 		Slug:        slug,
 
 		ComicRating: &types.ComicRatingType{
-			StarRating: Helper.ExtractStarRatingValue(starRating),
+			StarRating: service.Helper.ExtractStarRatingValue(starRating),
 			Rating:     ratingScore,
 		},
 	}
@@ -84,30 +86,29 @@ func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.Comi
 
 // GetComicList handles fetching a list of comics from a given path and returns it in the response context.
 // It uses a scraper service to scrape the comics from the specified path and then extracts the list of comics.
-func (service *comic) GetComicList(ctx *fiber.Ctx, path string, currentPage int16) error {
+func (service *ComicListService) GetComicList(ctx *fiber.Ctx, path string, currentPage int16) error {
 	var err *fiber.Error
 	var comicList []types.ComicListInfoType
 	var cachedComicList []types.ComicListInfoType
 
-	cached, _ := configs.Cache.Get(RdbCtx, path).Result()
+	cached, _ := configs.Cache.Get(service.RdbCtx, path).Result()
 	cachedErr := json.Unmarshal([]byte(cached), &cachedComicList)
 	if len(cached) > 0 && cachedErr == nil {
 		comicList = cachedComicList
 	} else {
-		scraperService := scraper.New()
-		Doc, err = scraperService.Scrape(path)
+		service.Doc, err = service.ScraperService.Scrape(path)
 		if err != nil {
-			return Helper.ResponseError(ctx, err)
+			return service.Helper.ResponseError(ctx, err)
 		}
 
 		comicList, err = service.ExtractComicList(ctx)
 
 		if err != nil {
-			return Helper.ResponseError(ctx, err)
+			return service.Helper.ResponseError(ctx, err)
 		}
 
 		cachedData, _ := json.Marshal(comicList)
-		configs.Cache.Set(RdbCtx, path, cachedData, 3*time.Hour)
+		configs.Cache.Set(service.RdbCtx, path, cachedData, 3*time.Hour)
 	}
 	return ctx.Status(http.StatusOK).JSON(&types.ResponseType{
 		Status:      true,
