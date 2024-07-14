@@ -26,6 +26,6 @@ type ComicDetailService interface {
 	GetComicDetail(ctx *fiber.Ctx, slug string) error
 	ExtractChapters(selector *goquery.Selection, chapters *[]types.ChapterDetailType)
 	ExtractGenres(selector *goquery.Selection, genres *[]types.GenreType)
-	ExtractComicDetail(ctx *fiber.Ctx, selector *goquery.Selection) (*types.ComicDetailType, error)
+	ExtractComicDetail(ctx *fiber.Ctx, selector *goquery.Selection) *types.ComicDetailType
 	ExtractRelatedSeries(selector *goquery.Selection, relatedSeries *[]types.ComicListInfoType)
 }
