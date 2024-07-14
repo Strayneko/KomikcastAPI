@@ -8,15 +8,15 @@ import (
 	"net/http"
 )
 
-type handler struct {
+type ErrorHandler struct {
 	errorHandler interfaces.HandlerInterface
 }
 
-func NewHandler() interfaces.HandlerInterface {
-	return &handler{}
+func NewErrorHandler() interfaces.HandlerInterface {
+	return &ErrorHandler{}
 }
 
-func (h *handler) ErrorHandler(ctx *fiber.Ctx, err error) error {
+func (h *ErrorHandler) ErrorHandler(ctx *fiber.Ctx, err error) error {
 	var e *fiber.Error
 	code := http.StatusOK
 

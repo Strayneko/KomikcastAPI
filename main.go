@@ -15,7 +15,7 @@ func main() {
 }
 
 func initFiberApp() {
-	handler := handlers.NewHandler()
+	handler := handlers.NewErrorHandler()
 	app := fiber.New(fiber.Config{
 		ErrorHandler: handler.ErrorHandler,
 	})
