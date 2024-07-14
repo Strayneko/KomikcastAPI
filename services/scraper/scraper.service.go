@@ -4,36 +4,34 @@ import (
 	browser "github.com/EDDYCJY/fake-useragent"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Strayneko/KomikcastAPI/configs"
+	"github.com/Strayneko/KomikcastAPI/interfaces"
 	"github.com/gofiber/fiber/v2"
 	"log"
 	"net/http"
 	"time"
 )
 
-var WebUrl string
-
-type Service interface {
-	Scrape(path string) (*goquery.Document, *fiber.Error)
-}
-
 type scrapper struct {
-	service Service
+	service interfaces.ScraperService
+	WebUrl  string
 }
 
-func New() Service {
-	WebUrl = configs.ViperEnv.GetString("WEB_URL")
-	return &scrapper{}
+func NewScraperService() interfaces.ScraperService {
+	webUrl := configs.ViperEnv.GetString("WEB_URL")
+	return &scrapper{
+		WebUrl: webUrl,
+	}
 }
 
 // Scrape fetches and parses the HTML document from the given path on the Komikcast website.
 // It handles HTTP requests and responses, and returns a goquery.Document for further processing.
 func (s *scrapper) Scrape(path string) (*goquery.Document, *fiber.Error) {
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", WebUrl+path, nil)
+	req, err := http.NewRequest("GET", s.WebUrl+path, nil)
 
 	if err != nil {
-		log.Printf("Cannot create request to %s%s", WebUrl, path)
-		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot create request to "+WebUrl+". Reason: "+err.Error())
+		log.Printf("Cannot create request to %s%s", s.WebUrl, path)
+		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot create request to "+s.WebUrl+". Reason: "+err.Error())
 	}
 
 	// Set randomw useragent
@@ -41,23 +39,25 @@ func (s *scrapper) Scrape(path string) (*goquery.Document, *fiber.Error) {
 	req.Header.Set("User-Agent", userAgent)
 
 	res, err := client.Do(req)
+
 	if err != nil {
-		log.Printf("Cannot connect to %s%s", WebUrl, path)
-		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot connect to "+WebUrl+". Reason: "+err.Error())
+		log.Printf("Cannot connect to %s%s", s.WebUrl, path)
+		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot connect to "+s.WebUrl+path+". Reason: "+err.Error())
 	}
 
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		log.Printf("status code error: %d %s", res.StatusCode, res.Status)
-		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot connect to "+WebUrl+". Reason: "+res.Status)
+		return nil, fiber.NewError(res.StatusCode, "Cannot connect to "+s.WebUrl+path+". Reason: "+res.Status)
 	}
 
 	// Load the HTML document
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		log.Printf("Cannot parse response from %s", WebUrl+path)
-		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot parse response from "+WebUrl+". Reason: "+err.Error())
+		log.Printf("Cannot parse response from %s", s.WebUrl+path)
+		return nil, fiber.NewError(http.StatusInternalServerError, "Cannot parse response from "+s.WebUrl+". Reason: "+err.Error())
 	}
+
 	return doc, nil
 }
