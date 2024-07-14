@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -49,4 +50,25 @@ func (h *helper) ExtractSlug(url string) string {
 	}
 
 	return splitedSlug[len(splitedSlug)-1]
+}
+
+// ExtractStarRatingValue extracts the star rating value from a width css attribute Ex: width: 70%, will result 3.5.
+// It uses a regular expression to find and return the number in the string.
+func (h *helper) ExtractStarRatingValue(starRating string) int8 {
+	// Compile the regex pattern to extract the number
+	re := regexp.MustCompile(`\d+(\.\d+)?`)
+
+	// Find the match
+	match := re.FindString(starRating)
+
+	if len(match) == 0 {
+		return 0
+	}
+	res, err := strconv.Atoi(match)
+	if err != nil {
+		return 0
+	}
+
+	return int8(res / 20)
+
 }

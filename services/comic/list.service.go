@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"github.com/Strayneko/KomikcastAPI/configs"
 	"net/http"
-	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -78,31 +76,10 @@ func (service *comic) ExtractComicDetail(selector *goquery.Selection) types.Comi
 		Slug:        slug,
 
 		ComicRating: &types.ComicRatingType{
-			StarRating: service.ExtractStarRatingValue(starRating),
+			StarRating: Helper.ExtractStarRatingValue(starRating),
 			Rating:     ratingScore,
 		},
 	}
-}
-
-// ExtractStarRatingValue extracts the star rating value from a width css attribute Ex: width: 70%, will result 3.5.
-// It uses a regular expression to find and return the number in the string.
-func (service *comic) ExtractStarRatingValue(starRating string) int8 {
-	// Compile the regex pattern to extract the number
-	re := regexp.MustCompile(`\d+(\.\d+)?`)
-
-	// Find the match
-	match := re.FindString(starRating)
-
-	if len(match) == 0 {
-		return 0
-	}
-	res, err := strconv.Atoi(match)
-	if err != nil {
-		return 0
-	}
-
-	return int8(res / 20)
-
 }
 
 // GetComicList handles fetching a list of comics from a given path and returns it in the response context.

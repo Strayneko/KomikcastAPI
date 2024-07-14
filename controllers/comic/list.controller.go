@@ -15,17 +15,17 @@ import (
 var Helper interfaces.Helper
 var ComicListService interfaces.ComicListService
 
-type handler struct {
-	controller interfaces.ComicController
+type ListHandler struct {
+	controller interfaces.ComicListController
 }
 
-func NewController() interfaces.ComicController {
+func NewComicListController() interfaces.ComicListController {
 	Helper = helpers.New()
 	ComicListService = comic.New()
-	return &handler{}
+	return &ListHandler{}
 }
 
-func (h *handler) GetComicList(ctx *fiber.Ctx) error {
+func (h *ListHandler) GetComicList(ctx *fiber.Ctx) error {
 	path := "manga/"
 	orderBy := ctx.Query("order")
 
@@ -49,7 +49,7 @@ func (h *handler) GetComicList(ctx *fiber.Ctx) error {
 	return ComicListService.GetComicList(ctx, path, currentPage)
 }
 
-func (h *handler) GetSearchedComics(ctx *fiber.Ctx) error {
+func (h *ListHandler) GetSearchedComics(ctx *fiber.Ctx) error {
 	query := ctx.Query("query", "")
 	path := "?s=" + query
 	currentPage, err := Helper.ValidatePage(ctx)
@@ -63,7 +63,7 @@ func (h *handler) GetSearchedComics(ctx *fiber.Ctx) error {
 	return ComicListService.GetComicList(ctx, path, currentPage)
 }
 
-func (h *handler) GetProjectComics(ctx *fiber.Ctx) error {
+func (h *ListHandler) GetProjectComics(ctx *fiber.Ctx) error {
 	path := "project/"
 	currentPage, err := Helper.ValidatePage(ctx)
 
