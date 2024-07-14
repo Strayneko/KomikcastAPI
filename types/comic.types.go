@@ -45,29 +45,41 @@ type ComicDetailType struct {
 	Title         string              `json:"title"`
 	Alias         string              `json:"alias"`
 	CoverImage    string              `json:"cover_image"`
-	ComicRating   ComicRatingType     `json:"comic_rating"`
+	ComicRating   *ComicRatingType    `json:"comic_rating"`
 	Summary       string              `json:"summary"`
-	FirstChapter  string              `json:"first_chapter"`
-	LatestChapter string              `json:"latest_chapter"`
-	Status        ComicStatusType     `json:"status"`
-	ReleasedDate  string              `json:"released_date"`
-	Artist        string              `json:"artist"`
-	UpdatedAt     string              `json:"updated_at"`
-	ComicType     ComicType           `json:"comic_type"`
-	Author        string              `json:"author"`
-	Serialization string              `json:"serialization"`
-	PostedOn      string              `json:"posted_on"`
-	Views         string              `json:"views"`
-	Genres        []string            `json:"genres"`
+	FirstChapter  *ChapterDetailType  `json:"first_chapter"`
+	LatestChapter *ChapterDetailType  `json:"latest_chapter"`
+	ComicInfo     *ComicInfoType      `json:"comic_info"`
+	Genres        []GenreType         `json:"genres"`
 	Chapters      []ChapterDetailType `json:"chapters"`
 	RelatedSeries []ComicListInfoType `json:"related_series"`
 }
 
 type ChapterDetailType struct {
 	Chapter     string `json:"chapter"`
-	LastUpdated string `json:"last_updated"`
+	ChapterUrl  string `json:"chapter_url"`
+	ChapterSlug string `json:"chapter_slug"`
+	LastUpdated string `json:"last_updated,omitempty"`
 }
 
 type ChapterImageType struct {
 	Image string `json:"image"`
+}
+
+type ComicInfoType struct {
+	Status        ComicStatusType `json:"status"`
+	ReleasedDate  string          `json:"released_date"`
+	Artist        string          `json:"artist"`
+	UpdatedAt     string          `json:"updated_at"`
+	ComicType     ComicType       `json:"comic_type"`
+	Author        string          `json:"author"`
+	Serialization string          `json:"serialization"`
+	PostedOn      string          `json:"posted_on"`
+	Views         string          `json:"views"`
+}
+
+type GenreType struct {
+	Genre string `json:"genre"`
+	Url   string `json:"url"`
+	Slug  string `json:"slug"`
 }
