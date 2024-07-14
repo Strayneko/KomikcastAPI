@@ -29,7 +29,7 @@ func (h *handler) GetComicList(ctx *fiber.Ctx) error {
 	path := "manga/"
 	orderBy := ctx.Query("order")
 
-	if !slices.Contains(configs.ComicOrderParams, orderBy) {
+	if isValidOrderBy := len(orderBy) > 0 && !slices.Contains(configs.ComicOrderParams, orderBy); isValidOrderBy {
 		orderTypes := strings.Join(configs.ComicOrderParams, ",")
 		return Helper.ResponseError(ctx, fiber.NewError(http.StatusBadRequest, "Order should be in "+orderTypes))
 	}
