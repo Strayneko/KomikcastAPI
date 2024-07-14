@@ -13,7 +13,7 @@ import (
 )
 
 var Helper interfaces.Helper
-var ComicService interfaces.ComicService
+var ComicListService interfaces.ComicListService
 
 type handler struct {
 	controller interfaces.ComicController
@@ -21,7 +21,7 @@ type handler struct {
 
 func NewController() interfaces.ComicController {
 	Helper = helpers.New()
-	ComicService = comic.New()
+	ComicListService = comic.New()
 	return &handler{}
 }
 
@@ -46,7 +46,7 @@ func (h *handler) GetComicList(ctx *fiber.Ctx) error {
 		path += "&order=" + configs.GetComicOrderBy(orderBy)
 	}
 
-	return ComicService.GetComicList(ctx, path, currentPage)
+	return ComicListService.GetComicList(ctx, path, currentPage)
 }
 
 func (h *handler) GetSearchedComics(ctx *fiber.Ctx) error {
@@ -60,5 +60,5 @@ func (h *handler) GetSearchedComics(ctx *fiber.Ctx) error {
 	if currentPage > 0 {
 		path = "page/" + strconv.Itoa(int(currentPage)) + "/?s=" + query
 	}
-	return ComicService.GetComicList(ctx, path, currentPage)
+	return ComicListService.GetComicList(ctx, path, currentPage)
 }

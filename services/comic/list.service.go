@@ -23,10 +23,10 @@ var Helper interfaces.Helper
 var RdbCtx context.Context = context.Background()
 
 type comic struct {
-	service interfaces.ComicService
+	service interfaces.ComicListService
 }
 
-func New() interfaces.ComicService {
+func New() interfaces.ComicListService {
 	Helper = helpers.New()
 	return &comic{}
 }

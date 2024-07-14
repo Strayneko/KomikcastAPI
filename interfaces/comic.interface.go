@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type ComicService interface {
+type ComicListService interface {
 	ExtractComicList(ctx *fiber.Ctx) ([]types.ComicListInfoType, *fiber.Error)
 	ExtractComicDetail(selector *goquery.Selection) types.ComicListInfoType
 	ExtractStarRatingValue(starRating string) int8
