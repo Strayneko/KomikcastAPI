@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"log"
 	"net/http"
+	"time"
 )
 
 var WebUrl string
@@ -27,7 +28,7 @@ func New() Service {
 // Scrape fetches and parses the HTML document from the given path on the Komikcast website.
 // It handles HTTP requests and responses, and returns a goquery.Document for further processing.
 func (s *scrapper) Scrape(path string) (*goquery.Document, *fiber.Error) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", WebUrl+path, nil)
 
 	if err != nil {
